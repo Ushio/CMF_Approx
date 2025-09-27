@@ -2,18 +2,35 @@ import torch
 import torch.nn as nn
 import csv
 import matplotlib.pyplot as plt
+import colour # pip install colour-science
 
-wavelength = []
-Xs = []
-Ys = []
-Zs = []
-with open("lin2012xyz10e_1_7sf.csv", newline="", encoding="utf-8") as f:
-    reader = csv.reader(f)
-    for row in reader:
-        wavelength.append(float(row[0]))
-        Xs.append(float(row[1]))
-        Ys.append(float(row[2]))
-        Zs.append(float(row[3]))
+
+# CMF_Name = 'cie_2_1931'
+CMF_Name = 'CIE 2015 10 Degree Standard Observer'
+
+CMF: colour.colorimetry.XYZ_ColourMatchingFunctions = colour.MSDS_CMFS[CMF_Name]
+
+wavelength = CMF.wavelengths
+Xs = [xyz[0] for xyz in CMF.values]
+Ys = [xyz[1] for xyz in CMF.values]
+Zs = [xyz[2] for xyz in CMF.values]
+
+with open( f"{CMF_Name}.csv", 'w', newline='') as csvfile:
+    writer = csv.writer(csvfile, delimiter=',')
+    for i in range(len(wavelength)):
+        writer.writerow([wavelength[i], Xs[i], Ys[i], Zs[i]])
+
+# wavelength = []
+# Xs = []
+# Ys = []
+# Zs = []
+# with open(f"{CMF_Name}.csv", newline="", encoding="utf-8") as f:
+#     reader = csv.reader(f)
+#     for row in reader:
+#         wavelength.append(float(row[0]))
+#         Xs.append(float(row[1]))
+#         Ys.append(float(row[2]))
+#         Zs.append(float(row[3]))
 
 def asymmetric_gaussian( x, mean, sigma, a ):
     k = (x - mean) / ( sigma + a * (x - mean) )
@@ -44,8 +61,8 @@ class AGaussianSinglePeak(nn.Module):
 class AGaussianDualPeak(nn.Module):
     def __init__(self):
         super().__init__()
-        self.f1 = AGaussianSinglePeak(mean_init=430.0, peak=0.42)
-        self.f2 = AGaussianSinglePeak(mean_init=600.0, peak=1.160)
+        self.f1 = AGaussianSinglePeak(mean_init=430.0, peak=0.42)  # bit adhoc
+        self.f2 = AGaussianSinglePeak(mean_init=600.0, peak=1.160) # bit adhoc
         self.c = nn.Parameter(torch.tensor(10.0))
     def forward(self, x):
         a = self.f1(x)
@@ -136,7 +153,7 @@ if True:
 
         optimizer.step()
 
-    print(function_x.cFunction("cmf_x_CIE_2006_10deg"))
+    print(function_x.cFunction("cmf_x"))
 
     plt.plot(wavelength, Xs, label='X(reference)')
     plt.plot(wavelength, pred.detach().numpy(), label='X(fit)')
@@ -160,35 +177,10 @@ if True:
 
         optimizer.step()
 
-    print(function_y.cFunction("cmf_y_CIE_2006_10deg"))
+    print(function_y.cFunction("cmf_y"))
 
     plt.plot(wavelength, Ys, label='Y(reference)')
     plt.plot(wavelength, pred1.detach().numpy(), label='Y(fit)')
-    plt.xlabel('Wavelength (nm)')
-    plt.legend()
-    plt.show()
-
-if True:
-    function_y_pdf = LogisticPDFSinglePeak(mean_init=550., lowerBound=390, upperBound=830)
-    optimizer = torch.optim.Adam(params=function_y_pdf.parameters(), lr=0.1, eps=1e-15)
-    loss_fn = torch.nn.KLDivLoss()
-
-    for i in range(10000):
-        pred = function_y_pdf(torch.tensor(wavelength))
-
-        loss = loss_fn((pred / pred.sum()).log(), torch.tensor(Ys) / sum(Ys))
-        
-        optimizer.zero_grad()
-        
-        loss.backward()
-
-        optimizer.step()
-
-    print(function_y_pdf.cFunction("cmf_y_pdf_CIE_2006_10deg", "cmf_y_sample_CIE_2006_10deg"))
-
-    peak = function_y_pdf(function_y_pdf.mean)
-    plt.plot(wavelength, Ys, label='Y(reference)')
-    plt.plot(wavelength, pred.detach().numpy() / peak.item(), label='Y(fit)')
     plt.xlabel('Wavelength (nm)')
     plt.legend()
     plt.show()
@@ -209,10 +201,36 @@ if True:
 
         optimizer.step()
 
-    print(function_z.cFunction("cmf_z_CIE_2006_10deg"))
+    print(function_z.cFunction("cmf_z"))
 
     plt.plot(wavelength, Zs, label='Z(reference)')
     plt.plot(wavelength, pred.detach().numpy(), label='Z(fit)')
     plt.xlabel('Wavelength (nm)')
     plt.legend()
     plt.show()
+
+if True:
+    function_y_pdf = LogisticPDFSinglePeak(mean_init=550., lowerBound=390, upperBound=830)
+    optimizer = torch.optim.Adam(params=function_y_pdf.parameters(), lr=0.1, eps=1e-15)
+    loss_fn = torch.nn.KLDivLoss()
+
+    for i in range(10000):
+        pred = function_y_pdf(torch.tensor(wavelength))
+
+        loss = loss_fn((pred / pred.sum()).log(), torch.tensor(Ys) / sum(Ys))
+        
+        optimizer.zero_grad()
+        
+        loss.backward()
+
+        optimizer.step()
+
+    print(function_y_pdf.cFunction("cmf_y_pdf", "cmf_y_sample"))
+
+    peak = function_y_pdf(function_y_pdf.mean)
+    plt.plot(wavelength, Ys, label='Y(reference)')
+    plt.plot(wavelength, pred.detach().numpy() / peak.item(), label='Y(fit)')
+    plt.xlabel('Wavelength (nm)')
+    plt.legend()
+    plt.show()
+
