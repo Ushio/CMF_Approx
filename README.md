@@ -1,9 +1,13 @@
-## A simple and table-free analytic approximation of color matching functions
+## A simple and table-free analytic approximation of color matching functions with importance sampling
 
 - CIE 1931 2 Degree 
 - CIE 2015 10 Degree Standard Observer
 
-Importance sampling based on [Trimmed Logistic](https://pbr-book.org/4ed/Utilities/Mathematical_Infrastructure#TrimmedLogistic) for the simplicity of CDF.
+The curves have slightly asymmetric shape. Thus, I used a modified version gaussian function:
+
+![image](AG.gif)
+
+Because it's hard to find a simple CDF, I used [Trimmed Logistic](https://pbr-book.org/4ed/Utilities/Mathematical_Infrastructure#TrimmedLogistic) for importance sampling.
 
 ## CIE 2015 10 Degree Standard Observer
 ![image](2015.png)
