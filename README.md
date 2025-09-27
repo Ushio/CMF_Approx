@@ -7,6 +7,8 @@ The curves have slightly asymmetric shape. Thus, I used a modified version gauss
 
 ![image](AG.gif)
 
+And fitted by PyTorch.
+
 Because it's hard to find a simple CDF, I used [Trimmed Logistic](https://pbr-book.org/4ed/Utilities/Mathematical_Infrastructure#TrimmedLogistic) for importance sampling.
 
 ## CIE 2015 10 Degree Standard Observer
