@@ -120,12 +120,12 @@ int main() {
     using namespace pr;
 
     // 1931
-    using namespace CIE_1931_2deg;
-    const char* dataName = "../cie_2_1931.csv";
+    //using namespace CIE_1931_2deg;
+    //const char* dataName = "../cie_2_1931.csv";
 
     // 2015
-    //using namespace CIE_2015_10deg;
-    //const char* dataName = "../CIE 2015 10 Degree Standard Observer.csv";
+    using namespace CIE_2015_10deg;
+    const char* dataName = "../CIE 2015 10 Degree Standard Observer.csv";
 
 
     // loading
@@ -159,16 +159,13 @@ int main() {
 
     double e = GetElapsedTime();
 
-    bool showOriginalData = false;
+    bool showOriginalData = true;
     bool showX = true;
     bool showY = true;
     bool showZ = true;
 
     bool showPDF = false;
     bool showSampledHistogram = false;
-
-    int CMF = 0;
-
 
     while (pr::NextFrame() == false) {
         if (IsImGuiUsingMouse() == false) {
@@ -208,7 +205,7 @@ int main() {
 
         if (showX)
         {
-            PrimBegin(PrimitiveMode::LineStrip, 1);
+            PrimBegin(PrimitiveMode::LineStrip, 3);
             for (int i = 0; i < N; i++)
             {
                 float nm = glm::mix(390.0f, 830.0f, (float)i / N);
@@ -220,7 +217,7 @@ int main() {
 
         if (showY)
         {
-            PrimBegin(PrimitiveMode::LineStrip, 1);
+            PrimBegin(PrimitiveMode::LineStrip, 3);
             for (int i = 0; i < N; i++)
             {
                 float nm = glm::mix(390.0f, 830.0f, (float)i / N);
@@ -232,7 +229,7 @@ int main() {
 
         if (showZ)
         {
-            PrimBegin(PrimitiveMode::LineStrip, 1);
+            PrimBegin(PrimitiveMode::LineStrip, 3);
             for (int i = 0; i < N; i++)
             {
                 float nm = glm::mix(390.0f, 830.0f, (float)i / N);
