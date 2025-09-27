@@ -5,8 +5,13 @@ import matplotlib.pyplot as plt
 import colour # pip install colour-science
 
 
-# CMF_Name = 'cie_2_1931'
-CMF_Name = 'CIE 2015 10 Degree Standard Observer'
+CMF_Name = 'cie_2_1931'
+X_PEAK_1 = 0.42
+X_PEAK_2 = 1.64
+
+# CMF_Name = 'CIE 2015 10 Degree Standard Observer'
+# X_PEAK_1 = 0.42
+# X_PEAK_2 = 1.160
 
 CMF: colour.colorimetry.XYZ_ColourMatchingFunctions = colour.MSDS_CMFS[CMF_Name]
 
@@ -15,10 +20,10 @@ Xs = [xyz[0] for xyz in CMF.values]
 Ys = [xyz[1] for xyz in CMF.values]
 Zs = [xyz[2] for xyz in CMF.values]
 
-with open( f"{CMF_Name}.csv", 'w', newline='') as csvfile:
-    writer = csv.writer(csvfile, delimiter=',')
-    for i in range(len(wavelength)):
-        writer.writerow([wavelength[i], Xs[i], Ys[i], Zs[i]])
+# with open( f"{CMF_Name}.csv", 'w', newline='') as csvfile:
+#     writer = csv.writer(csvfile, delimiter=',')
+#     for i in range(len(wavelength)):
+#         writer.writerow([wavelength[i], Xs[i], Ys[i], Zs[i]])
 
 # wavelength = []
 # Xs = []
@@ -61,8 +66,8 @@ class AGaussianSinglePeak(nn.Module):
 class AGaussianDualPeak(nn.Module):
     def __init__(self):
         super().__init__()
-        self.f1 = AGaussianSinglePeak(mean_init=430.0, peak=0.42)  # bit adhoc
-        self.f2 = AGaussianSinglePeak(mean_init=600.0, peak=1.160) # bit adhoc
+        self.f1 = AGaussianSinglePeak(mean_init=430.0, peak=X_PEAK_1)  
+        self.f2 = AGaussianSinglePeak(mean_init=600.0, peak=X_PEAK_2)
         self.c = nn.Parameter(torch.tensor(10.0))
     def forward(self, x):
         a = self.f1(x)
