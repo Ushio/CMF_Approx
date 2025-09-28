@@ -7,19 +7,22 @@
 namespace CIE_1931_2deg
 {
     inline float asymmetric_gaussian(float x, float mean, float sigma, float a) {
-        float k = (x - mean) / (sigma + a * (x - mean));
+        float denom = sigma + a * (x - mean);
+        if (denom < 1.0e-15f) { denom = 1.0e-15f; }
+        if (sigma * 2.0f < denom) { denom = sigma * 2.0f; }
+        float k = (x - mean) / denom;
         return expf(-k * k);
     }
     inline float cmf_x(float x) {
-        float a = 0.42f * asymmetric_gaussian(x, 447.95562744140625f, 38.40695571899414f, 0.40412160754203796f);
-        float b = 1.64f * asymmetric_gaussian(x, 588.0320434570312f, 55.6748046875f, -0.1073513776063919f);
-        return a + b - a * b * 8.491180419921875f;
+        float a = 0.37f * asymmetric_gaussian(x, 445.8890380859375f, 32.71352767944336f, 0.2403123378753662f);
+        float b = 1.113f * asymmetric_gaussian(x, 593.9199829101562f, 51.980140686035156f, -0.06552795320749283f);
+        return a + b - a * b * 21.016616821289062f;
     }
     inline float cmf_y(float x) {
         return 1.0f * asymmetric_gaussian(x, 556.5616455078125f, 59.5950927734375f, 0.056370146572589874f);
     }
     inline float cmf_z(float x) {
-        return 1.7829682f * asymmetric_gaussian(x, 447.90704345703125f, 32.452816009521484f, 0.12668778002262115f);
+        return 1.7829682f * asymmetric_gaussian(x, 447.90643310546875f, 32.452659606933594f, 0.12635648250579834f);
     }
 
     inline float logistic_pdf(float x, float s)
@@ -63,19 +66,22 @@ namespace CIE_1931_2deg
 namespace CIE_2015_10deg
 {
     inline float asymmetric_gaussian(float x, float mean, float sigma, float a) {
-        float k = (x - mean) / (sigma + a * (x - mean));
+        float denom = sigma + a * (x - mean);
+        if (denom < 1.0e-15f) { denom = 1.0e-15f; }
+        if (sigma * 2.0f < denom) { denom = sigma * 2.0f; }
+        float k = (x - mean) / denom;
         return expf(-k * k);
     }
     inline float cmf_x(float x) {
-        float a = 0.42f * asymmetric_gaussian(x, 445.5875549316406f, 31.161394119262695f, 0.065997414290905f);
-        float b = 1.16f * asymmetric_gaussian(x, 594.5599975585938f, 48.59465408325195f, -0.04558335989713669f);
-        return a + b - a * b * 42.55435562133789f;
+        float a = 0.42f * asymmetric_gaussian(x, 445.5849609375f, 31.146467208862305f, 0.06435633450746536f);
+        float b = 1.16f * asymmetric_gaussian(x, 594.5570068359375f, 48.602108001708984f, -0.04772702232003212f);
+        return a + b - a * b * 42.559776306152344f;
     }
     inline float cmf_y(float x) {
         return 1.0f * asymmetric_gaussian(x, 556.8383178710938f, 66.54190826416016f, -0.026492968201637268f);
     }
     inline float cmf_z(float x) {
-        return 2.146832f * asymmetric_gaussian(x, 445.9251708984375f, 30.91781997680664f, 0.08379140496253967f);
+        return 2.146832f * asymmetric_gaussian(x, 445.9251708984375f, 30.91781997680664f, 0.08379141241312027f);
     }
 
     inline float logistic_pdf(float x, float s)
@@ -126,7 +132,6 @@ int main() {
     // 2015
     using namespace CIE_2015_10deg;
     const char* dataName = "../CIE 2015 10 Degree Standard Observer.csv";
-
 
     // loading
     std::vector<float> wavelength;

@@ -6,8 +6,8 @@ import colour # pip install colour-science
 
 
 CMF_Name = 'cie_2_1931'
-X_PEAK_1 = 0.42
-X_PEAK_2 = 1.64
+X_PEAK_1 = 0.37
+X_PEAK_2 = 1.113
 
 # CMF_Name = 'CIE 2015 10 Degree Standard Observer'
 # X_PEAK_1 = 0.42
@@ -38,7 +38,9 @@ Zs = [xyz[2] for xyz in CMF.values]
 #         Zs.append(float(row[3]))
 
 def asymmetric_gaussian( x, mean, sigma, a ):
-    k = (x - mean) / ( sigma + a * (x - mean) )
+    denom = sigma + a * (x - mean)
+    denom = torch.clamp( denom, min=1.0e-15, max=sigma.detach() * 2.0 )
+    k = (x - mean) / denom
     return torch.exp( - k * k )
 
 class AGaussianSinglePeak(nn.Module):
@@ -55,7 +57,10 @@ class AGaussianSinglePeak(nn.Module):
     def cFunction(self, name):
         return f"""
         inline float asymmetric_gaussian( float x, float mean, float sigma, float a ) {{
-            float k = (x - mean) / ( sigma + a * (x - mean) );
+            float denom = sigma + a * (x - mean);
+            if( denom < 1.0e-15f ) {{ denom = 1.0e-15f; }}
+            if( sigma * 2.0f < denom ) {{ denom = sigma * 2.0f; }}
+            float k = (x - mean) / denom;
             return expf( - k * k );
         }}
         inline float {name}( float x ) {{
@@ -77,7 +82,10 @@ class AGaussianDualPeak(nn.Module):
     def cFunction(self, name):
         return f"""
         inline float asymmetric_gaussian( float x, float mean, float sigma, float a ) {{
-            float k = (x - mean) / ( sigma + a * (x - mean) );
+            float denom = sigma + a * (x - mean);
+            if( denom < 1.0e-15f ) {{ denom = 1.0e-15f; }}
+            if( sigma * 2.0f < denom ) {{ denom = sigma * 2.0f; }}
+            float k = (x - mean) / denom;
             return expf( - k * k );
         }}
         inline float {name}( float x ) {{
