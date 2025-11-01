@@ -28,7 +28,7 @@ namespace CIE_1931_2deg
     inline float logistic_pdf(float x, float s)
     {
         float k = expf(-fabsf(x) / s);
-        return s * k / ((1.0 + k) * (1.0 + k));
+        return k / ((1.0 + k) * (1.0 + k) * s);
     }
     inline float logistic_cdf(float x, float s)
     {
@@ -40,23 +40,18 @@ namespace CIE_1931_2deg
         if (u < 1.175494351e-38f) { u = 1.175494351e-38f; }
         return -s * logf(1.0f / u - 1.0f);
     }
-    inline float trimmed_logistic_pdf(float x, float s, float a, float b)
-    {
-        return logistic_pdf(x, s) / (logistic_cdf(b, s) - logistic_cdf(a, s));
-    }
-
     inline float cmf_y_pdf(float x) {
         float sx = x - 559.8692016601562f;
         float s = 23.981721878051758f;
-        float a = -169.86920166015625;
-        float b = 270.13079833984375;
-        return logistic_pdf(sx, 23.981721878051758f) / (logistic_cdf(b, s) - logistic_cdf(a, s));
+        float a = -169.86920166015625f;
+        float b = 270.13079833984375f;
+        return logistic_pdf(sx, s) / (logistic_cdf(b, s) - logistic_cdf(a, s));
     }
 
     inline float cmf_y_sample(float u) {
         float s = 23.981721878051758f;
-        float a = -169.86920166015625;
-        float b = 270.13079833984375;
+        float a = -169.86920166015625f;
+        float b = 270.13079833984375f;
         float Pa = logistic_cdf(a, s);
         float Pb = logistic_cdf(b, s);
         return inverse_logistic_cdf(Pa + (Pb - Pa) * u, s) + 559.8692016601562f;
@@ -87,7 +82,7 @@ namespace CIE_2015_10deg
     inline float logistic_pdf(float x, float s)
     {
         float k = expf(-fabsf(x) / s);
-        return s * k / ((1.0 + k) * (1.0 + k));
+        return k / ((1.0 + k) * (1.0 + k) * s);
     }
     inline float logistic_cdf(float x, float s)
     {
@@ -99,23 +94,18 @@ namespace CIE_2015_10deg
         if (u < 1.175494351e-38f) { u = 1.175494351e-38f; }
         return -s * logf(1.0f / u - 1.0f);
     }
-    inline float trimmed_logistic_pdf(float x, float s, float a, float b)
-    {
-        return logistic_pdf(x, s) / (logistic_cdf(b, s) - logistic_cdf(a, s));
-    }
-
     inline float cmf_y_pdf(float x) {
         float sx = x - 554.270751953125f;
         float s = 26.879621505737305f;
-        float a = -164.270751953125;
-        float b = 275.729248046875;
-        return logistic_pdf(sx, 26.879621505737305f) / (logistic_cdf(b, s) - logistic_cdf(a, s));
+        float a = -164.270751953125f;
+        float b = 275.729248046875f;
+        return logistic_pdf(sx, s) / (logistic_cdf(b, s) - logistic_cdf(a, s));
     }
 
     inline float cmf_y_sample(float u) {
         float s = 26.879621505737305f;
-        float a = -164.270751953125;
-        float b = 275.729248046875;
+        float a = -164.270751953125f;
+        float b = 275.729248046875f;
         float Pa = logistic_cdf(a, s);
         float Pb = logistic_cdf(b, s);
         return inverse_logistic_cdf(Pa + (Pb - Pa) * u, s) + 554.270751953125f;
@@ -172,11 +162,44 @@ int main() {
     bool showPDF = false;
     bool showSampledHistogram = false;
 
-    double integral = 0;
+    //{
+    //    double result = 0;
+    //    int nSample = 1000000;
+    //    for (int i = 0; i < nSample; i++)
+    //    {
+    //        float x = glm::mix(-5.0f, 5.0f, (float)i / nSample);
+    //        float v = logistic_pdf(x, 1.0f);
+
+    //        float dx = (float)10 / nSample;
+    //        result += dx * v;
+    //    }
+
+    //    printf("");
+    //}
+
+    //double integral = 0;
+    //for (int nm = 390; nm < 830; nm++)
+    //{
+    //    integral += cmf_y(nm);
+    //}
+
+    double integral_p = 0;
     for (int nm = 390; nm < 830; nm++)
     {
-        integral += cmf_y(nm);
+        integral_p += 1.0f / (830 - 390) * cmf_y_pdf(nm);
     }
+
+    PCG rng;
+    double sum = 0;
+    int nSample = 10000;
+    for (int i = 0; i < nSample; i++)
+    {
+        float lambda = cmf_y_sample(rng.uniformf());
+        float p_lambda = cmf_y_pdf(lambda);
+        float c = cmf_y(lambda) / p_lambda;
+        sum += c;
+    }
+    double integral = sum / nSample;
 
     while (pr::NextFrame() == false) {
         if (IsImGuiUsingMouse() == false) {
@@ -251,7 +274,7 @@ int main() {
         }
 
         // PDF
-        static float pdf_view_scale = 0.2f;
+        static float pdf_view_scale = 200;
 
         if (showPDF)
         {
@@ -331,7 +354,7 @@ int main() {
         ImGui::Checkbox("show PDF(y)", &showPDF);
         if (showPDF)
         {
-            ImGui::SliderFloat("pdf view scale", &pdf_view_scale, 0, 1);
+            ImGui::SliderFloat("pdf view scale", &pdf_view_scale, 0, 300);
         }
         ImGui::Checkbox("show Sampled Histogram(y)", &showSampledHistogram);
 

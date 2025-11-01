@@ -103,8 +103,10 @@ class AGaussianDualPeak(nn.Module):
         """
 
 def logistic( x, s ):
+    # k = torch.exp( - torch.abs(x) / s )
+    # return s * k / ( (1.0 + k) ** 2 )
     k = torch.exp( - torch.abs(x) / s )
-    return s * k / ( (1.0 + k) ** 2 )
+    return k / ( s * (1.0 + k) ** 2 )
 
 class LogisticPDFSinglePeak(nn.Module):
     def __init__(self, mean_init, lowerBound, upperBound ):
@@ -122,7 +124,7 @@ class LogisticPDFSinglePeak(nn.Module):
         inline float logistic_pdf( float x, float s )
         {{
             float k = expf( - fabsf(x) / s );
-            return s * k / ( (1.0 + k) * (1.0 + k) );
+            return k / ( (1.0 + k) * (1.0 + k) * s );
         }}
         inline float logistic_cdf( float x, float s )
         {{
@@ -134,23 +136,18 @@ class LogisticPDFSinglePeak(nn.Module):
             if (u < 1.175494351e-38f) {{ u = 1.175494351e-38f; }}
             return -s * logf( 1.0f / u - 1.0f );
         }}
-        inline float trimmed_logistic_pdf( float x, float s, float a, float b )
-        {{
-            return logistic_pdf( x, s ) / ( logistic_cdf(b, s) - logistic_cdf(a, s) );
-        }}
-
         inline float {name_pdf}( float x ) {{
             float sx = x - {self.mean.item()}f;
             float s = {self.sigma.item()}f;
-            float a = {self.lowerBound - self.mean.item()};
-            float b = {self.upperBound - self.mean.item()};
-            return logistic_pdf(sx, {self.sigma.item()}f) / ( logistic_cdf(b, s) - logistic_cdf(a, s) );
+            float a = {self.lowerBound - self.mean.item()}f;
+            float b = {self.upperBound - self.mean.item()}f;
+            return logistic_pdf(sx, s) / ( logistic_cdf(b, s) - logistic_cdf(a, s) );
         }}
 
         inline float {name_sample}( float u ) {{
             float s = {self.sigma.item()}f;
-            float a = {self.lowerBound - self.mean.item()};
-            float b = {self.upperBound - self.mean.item()};
+            float a = {self.lowerBound - self.mean.item()}f;
+            float b = {self.upperBound - self.mean.item()}f;
             float Pa = logistic_cdf(a, s);
             float Pb = logistic_cdf(b, s);
             return inverse_logistic_cdf( Pa + (Pb - Pa) * u, s ) + {self.mean.item()}f;
