@@ -175,7 +175,7 @@ int main() {
     double integral = 0;
     for (int nm = 390; nm < 830; nm++)
     {
-        integral += cmf_y(nm) / 118.00888010234846f;
+        integral += cmf_y(nm);
     }
 
     while (pr::NextFrame() == false) {
