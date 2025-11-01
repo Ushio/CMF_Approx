@@ -16,13 +16,13 @@ namespace CIE_1931_2deg
     inline float cmf_x(float x) {
         float a = 0.37f * asymmetric_gaussian(x, 445.8890380859375f, 32.71352767944336f, 0.2403123378753662f);
         float b = 1.113f * asymmetric_gaussian(x, 593.9199829101562f, 51.980140686035156f, -0.06552795320749283f);
-        return a + b - a * b * 21.016616821289062f;
+        return (a + b - a * b * 21.016616821289062f) * 1.0057787153642084f;
     }
     inline float cmf_y(float x) {
-        return 1.0f * asymmetric_gaussian(x, 556.5616455078125f, 59.5950927734375f, 0.056370146572589874f);
+        return 1.0f * asymmetric_gaussian(x, 556.5616455078125f, 59.5950927734375f, 0.056370146572589874f) * 1.0067831838201629f;
     }
     inline float cmf_z(float x) {
-        return 1.7829682f * asymmetric_gaussian(x, 447.90643310546875f, 32.452659606933594f, 0.12635648250579834f);
+        return 1.7829682f * asymmetric_gaussian(x, 447.90643310546875f, 32.452659606933594f, 0.12635648250579834f) * 1.0171607842044876f;
     }
 
     inline float logistic_pdf(float x, float s)
@@ -75,13 +75,13 @@ namespace CIE_2015_10deg
     inline float cmf_x(float x) {
         float a = 0.42f * asymmetric_gaussian(x, 445.5849609375f, 31.146467208862305f, 0.06435633450746536f);
         float b = 1.16f * asymmetric_gaussian(x, 594.5570068359375f, 48.602108001708984f, -0.04772702232003212f);
-        return a + b - a * b * 42.559776306152344f;
+        return (a + b - a * b * 42.559776306152344f) * 1.0008530432426956f;
     }
     inline float cmf_y(float x) {
-        return 1.0f * asymmetric_gaussian(x, 556.8383178710938f, 66.54190826416016f, -0.026492968201637268f);
+        return 1.0f * asymmetric_gaussian(x, 556.8383178710938f, 66.54190826416016f, -0.026492968201637268f) * 1.004315086937574f;
     }
     inline float cmf_z(float x) {
-        return 2.146832f * asymmetric_gaussian(x, 445.9251708984375f, 30.91781997680664f, 0.08379141241312027f);
+        return 2.146832f * asymmetric_gaussian(x, 445.9251708984375f, 30.91781997680664f, 0.08379141241312027f) * 0.9975112815948937f;
     }
 
     inline float logistic_pdf(float x, float s)
@@ -171,6 +171,12 @@ int main() {
 
     bool showPDF = false;
     bool showSampledHistogram = false;
+
+    double integral = 0;
+    for (int nm = 390; nm < 830; nm++)
+    {
+        integral += cmf_y(nm) / 118.00888010234846f;
+    }
 
     while (pr::NextFrame() == false) {
         if (IsImGuiUsingMouse() == false) {
@@ -286,6 +292,16 @@ int main() {
             }
             PrimEnd();
         }
+
+        PrimBegin(PrimitiveMode::LineStrip, 2);
+        for (int i = 0; i < N; i++)
+        {
+            float nm = glm::mix(360.0f, 830.0f, (float)i / N);
+            float x = nm / 100.0f;
+            float n = 1.64732f + 7907.16861f / (nm * nm);
+            PrimVertex({ x, n * 10, 0 }, { 255, 255, 255 });
+        }
+        PrimEnd();
 
         PopGraphicState();
         EndCamera();

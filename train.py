@@ -3,7 +3,10 @@ import torch.nn as nn
 import csv
 import matplotlib.pyplot as plt
 import colour # pip install colour-science
-
+import numpy
+# cs = colour.RGB_COLOURSPACES['sRGB']
+# M = cs.matrix_XYZ_to_RGB
+# print(numpy.array2string(M, precision=16))
 
 CMF_Name = 'cie_2_1931'
 X_PEAK_1 = 0.37
@@ -54,7 +57,9 @@ class AGaussianSinglePeak(nn.Module):
     def forward(self, x):
         return self.peak * asymmetric_gaussian(x, self.mean, self.sigma, self.a)
     
-    def cFunction(self, name):
+    def cFunction(self, name, reference_integral):
+        kNormalize = reference_integral / sum([self.forward(nm) for nm in range(390, 830)]).item()
+
         return f"""
         inline float asymmetric_gaussian( float x, float mean, float sigma, float a ) {{
             float denom = sigma + a * (x - mean);
@@ -64,7 +69,7 @@ class AGaussianSinglePeak(nn.Module):
             return expf( - k * k );
         }}
         inline float {name}( float x ) {{
-            return {self.peak}f * asymmetric_gaussian( x, {self.mean.item()}f, {self.sigma.item()}f, {self.a.item()}f );
+            return {self.peak}f * asymmetric_gaussian( x, {self.mean.item()}f, {self.sigma.item()}f, {self.a.item()}f ) * {kNormalize}f;
         }}
         """ 
     
@@ -79,7 +84,9 @@ class AGaussianDualPeak(nn.Module):
         b = self.f2(x)
         return a + b - a * b * self.c
     
-    def cFunction(self, name):
+    def cFunction(self, name, reference_integral):
+        kNormalize = reference_integral / sum([self.forward(nm) for nm in range(390, 830)]).item()
+
         return f"""
         inline float asymmetric_gaussian( float x, float mean, float sigma, float a ) {{
             float denom = sigma + a * (x - mean);
@@ -91,7 +98,7 @@ class AGaussianDualPeak(nn.Module):
         inline float {name}( float x ) {{
             float a = {self.f1.peak}f * asymmetric_gaussian( x, {self.f1.mean.item()}f, {self.f1.sigma.item()}f, {self.f1.a.item()}f );
             float b = {self.f2.peak}f * asymmetric_gaussian( x, {self.f2.mean.item()}f, {self.f2.sigma.item()}f, {self.f2.a.item()}f );
-            return a + b - a * b * {self.c.item()}f;
+            return ( a + b - a * b * {self.c.item()}f ) * {kNormalize}f;
         }}
         """
 
@@ -166,7 +173,7 @@ if True:
 
         optimizer.step()
 
-    print(function_x.cFunction("cmf_x"))
+    print(function_x.cFunction("cmf_x", sum(Xs)))
 
     plt.plot(wavelength, Xs, label='X(reference)')
     plt.plot(wavelength, pred.detach().numpy(), label='X(fit)')
@@ -190,7 +197,7 @@ if True:
 
         optimizer.step()
 
-    print(function_y.cFunction("cmf_y"))
+    print(function_y.cFunction("cmf_y", sum(Ys)))
 
     plt.plot(wavelength, Ys, label='Y(reference)')
     plt.plot(wavelength, pred1.detach().numpy(), label='Y(fit)')
@@ -214,7 +221,7 @@ if True:
 
         optimizer.step()
 
-    print(function_z.cFunction("cmf_z"))
+    print(function_z.cFunction("cmf_z", sum(Zs)))
 
     plt.plot(wavelength, Zs, label='Z(reference)')
     plt.plot(wavelength, pred.detach().numpy(), label='Z(fit)')
